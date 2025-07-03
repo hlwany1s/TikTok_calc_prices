@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -109,22 +108,22 @@
 
   <header>
     <img src="hlwany_logo_final.png" alt="Logo">
-    <h1>الحاسبه الخاصة بـ <strong>hlwany1s</strong></h1>
+    <h1>الحاسبة الخاصة بـ <strong>hlwany1s</strong></h1>
   </header>
 
   <div class="container">
-    <h3>💰 حساب العملات من المبلغ</h3>
-    <p>المبلغ المدفوع بالدولار:</p>
-    <input id="amount" type="number" placeholder="أدخل المبلغ بالدولار">
-    <button onclick="calculateCoins()">احسب عدد العملات 🧮</button>
+    <h3>💰 احسب عدد العملات من المبلغ</h3>
+    <p>المبلغ المتاح معك بالجنيه:</p>
+    <input id="money" type="number" placeholder="أدخل المبلغ بالجنيه">
+    <button onclick="fromMoney()">احسب عدد العملات 🧮</button>
     <div id="result1"></div>
   </div>
 
   <div class="container">
-    <h3>🪙 حساب السعر من العملات</h3>
+    <h3>🪙 احسب السعر من عدد العملات</h3>
     <p>عدد العملات المطلوبة:</p>
     <input id="coins" type="number" placeholder="أدخل عدد العملات">
-    <button onclick="calculatePrice()">احسب السعر المطلوب 💵</button>
+    <button onclick="fromCoins()">احسب السعر 💵</button>
     <div id="result2"></div>
   </div>
 
@@ -144,20 +143,73 @@
   </footer>
 
   <script>
-    const rate = 0.013;
+    const prices = {
+      75: 50, 115: 70, 160: 100, 220: 135, 300: 175, 330: 190, 355: 205,
+      520: 300, 715: 410, 890: 500, 1000: 550, 1500: 825, 1820: 1000,
+      2000: 1100, 2500: 1375, 3000: 1650, 3500: 2200, 4000: 2225,
+      4500: 2475, 5000: 2740, 5500: 3015, 6000: 3290, 6500: 3560,
+      7000: 3835, 8000: 4375, 9000: 4915, 10000: 5450, 12000: 6540,
+      13000: 7085, 14000: 7630, 17500: 9540, 20000: 10900, 25000: 13600,
+      30000: 16330, 36850: 20000, 50000: 27100, 75000: 40600, 100000: 54000
+    };
 
-    function calculateCoins() {
-      const amount = document.getElementById("amount").value;
-      if (!amount) return;
-      const coins = Math.floor(amount / rate);
-      document.getElementById("result1").innerText = `عدد العملات الممكن شرائها: ${coins}`;
+    function fromCoins() {
+      const coins = parseInt(document.getElementById("coins").value);
+      if (!coins) return;
+
+      const coinList = Object.keys(prices).map(c => parseInt(c)).sort((a, b) => a - b);
+
+      if (prices[coins]) {
+        document.getElementById("result2").innerText = `السعر المطلوب: ${prices[coins]} جنيه`;
+        return;
+      }
+
+      let lower = null, upper = null;
+      for (let i = 0; i < coinList.length; i++) {
+        if (coinList[i] < coins) lower = coinList[i];
+        if (coinList[i] > coins) {
+          upper = coinList[i];
+          break;
+        }
+      }
+
+      if (lower && upper) {
+        const lowerPrice = prices[lower];
+        const upperPrice = prices[upper];
+        const proportion = (coins - lower) / (upper - lower);
+        const estimatedPrice = Math.round(lowerPrice + proportion * (upperPrice - lowerPrice));
+        document.getElementById("result2").innerText = `السعر التقريبي: ${estimatedPrice} جنيه`;
+      } else {
+        document.getElementById("result2").innerText = "العدد خارج نطاق التسعير المتاح.";
+      }
     }
 
-    function calculatePrice() {
-      const coins = document.getElementById("coins").value;
-      if (!coins) return;
-      const price = (coins * rate).toFixed(2);
-      document.getElementById("result2").innerText = `السعر المطلوب بالدولار: $${price}`;
+    function fromMoney() {
+      const money = parseFloat(document.getElementById("money").value);
+      if (!money) return;
+
+      const sorted = Object.entries(prices)
+        .map(([coins, price]) => ({ coins: parseInt(coins), price }))
+        .sort((a, b) => a.price - b.price);
+
+      let lower = null, upper = null;
+      for (let i = 0; i < sorted.length; i++) {
+        if (sorted[i].price <= money) lower = sorted[i];
+        if (sorted[i].price > money) {
+          upper = sorted[i];
+          break;
+        }
+      }
+
+      if (lower && upper) {
+        const proportion = (money - lower.price) / (upper.price - lower.price);
+        const estimatedCoins = Math.round(lower.coins + proportion * (upper.coins - lower.coins));
+        document.getElementById("result1").innerText = `يمكنك شراء: ${estimatedCoins} عملة`;
+      } else if (lower) {
+        document.getElementById("result1").innerText = `يمكنك شراء: ${lower.coins} عملة`;
+      } else {
+        document.getElementById("result1").innerText = "لا توجد عملات متاحة بهذا المبلغ.";
+      }
     }
   </script>
 
